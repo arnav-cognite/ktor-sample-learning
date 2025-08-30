@@ -1,0 +1,10 @@
+ktor:
+    application:
+        modules:
+            - com.arnav.ApplicationKt.module
+    deployment:
+        port: 8080
+postgres:
+  url: "jdbc:postgresql://localhost:5432/cluster_db"
+  user: "admin"
+  password: ${DATABASE_PASSWORD}
