@@ -1,19 +1,14 @@
 package com.arnav
 
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
-import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.sql.Connection
-import java.sql.DriverManager
-import org.jetbrains.exposed.sql.*
 
 fun Application.configureRouting() {
     install(StatusPages) {
@@ -23,10 +18,10 @@ fun Application.configureRouting() {
     }
 
     // Get the connection from the singleton
-    val dbConnection = ConnectionManager.getOrThrowConnection()
+//    val dbConnection = ConnectionManager.getOrThrowConnection()
 
     // Pass the connection to the MeterService
-    val meterService = MeterService(dbConnection)
+    val meterService = MeterService()
     val eventProcessor = UsageEventProcessor(meterService)
 
     routing {

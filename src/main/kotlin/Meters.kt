@@ -11,8 +11,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
-import java.lang.Exception
-import java.sql.Connection
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -61,29 +60,37 @@ data class MeterDao(
     @Serializable(with = OffsetDateTimeSerializer::class) val createdAt: OffsetDateTime = OffsetDateTime.now(),
     @Serializable(with = OffsetDateTimeSerializer::class) val updatedAt: OffsetDateTime = OffsetDateTime.now()
 )
-class MeterService(private val connection: Connection) {
+class MeterService() {
     companion object {
-        private const val SELECT_METER_BY_CDF_SERVICE_AND_EVENT_TYPE = "SELECT metric_key, window_size, value_property, aggregation FROM meters WHERE cdf_service = ? AND event_type = ?"
-    }
-    init {
-        val statement = connection.createStatement()
+        private const val SELECT_METER_BY_CDF_SERVICE_AND_EVENT_TYPE =
+            "SELECT metric_key, window_size, value_property, aggregation FROM meters WHERE cdf_service = '@1' AND event_type = '@2'"
     }
 
-    suspend fun findMeterByCdfServiceAndEventType(service: String, eventType: String): MeterDao = withContext(Dispatchers.IO) {
-        val statement = connection.prepareStatement(SELECT_METER_BY_CDF_SERVICE_AND_EVENT_TYPE)
-        statement.setString(1, service)
-        statement.setString(2, eventType)
+    suspend fun findMeterByCdfServiceAndEventType(service: String, eventType: String): MeterDao =
+        withContext(Dispatchers.IO) {
 
-        val rs = statement.executeQuery()
-        if(rs.next()){
-            val metricKey = rs.getString("metric_key")
-            val windowSize = rs.getString("window_size")
-            return@withContext MeterDao(cdfService = service, eventType = eventType, windowSize = windowSize,
-                metricKey = metricKey, valueProperty = rs.getString("value_property"),
-                aggregation = rs.getString("aggregation"))
+            transaction {
+                // The `exec` function takes a lambda that returns a value.
+                val result = exec(
+                    SELECT_METER_BY_CDF_SERVICE_AND_EVENT_TYPE
+                        .replace("@1", service)
+                        .replace("@2", eventType)
+                ) { resultSet ->
+                    if (resultSet.next()) {
+                        // This returns from the exec lambda
+                        MeterDao(
+                            cdfService = service,
+                            eventType = eventType,
+                            windowSize = resultSet.getString("window_size"),
+                            metricKey = resultSet.getString("metric_key"),
+                            valueProperty = resultSet.getString("value_property"),
+                            aggregation = resultSet.getString("aggregation")
+                        )
+                    } else {
+                        null
+                    }
+                }
+                result ?: throw Exception("No Meter found with CDF service $service and EventType $eventType")
+            }
         }
-        else{
-            throw Exception("No Meter found with CDF service $service and EventType $eventType")
-        }
-    }
 }

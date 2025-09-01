@@ -1,12 +1,13 @@
 package com.arnav
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
+import java.time.Instant
 
 @Serializable
 data class UsageEvent(
     val type: String,
-    val time: String,
+    @Serializable(with = InstantSerializer::class) val time: Instant,
     val id: String,
     val source: String,
     val project: String,

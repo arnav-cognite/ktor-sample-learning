@@ -1,29 +1,26 @@
 package com.arnav
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.exposedLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
-import java.sql.DriverManager
 
 fun Application.configureDatabasesV2() {
-    val url = environment.config.property("postgres.url").getString()
-    val user = environment.config.property("postgres.user").getString()
-    val password = environment.config.property("postgres.password").getString()
-
-    val dbConnection = DriverManager.getConnection(url, user, password)
-    ConnectionManager.setConnection(dbConnection)
-
-    Database.connect(
-        url = url,
-        user = user,
-        driver = "org.postgresql.Driver",
-        password = password
-    )
-
-    exposedLogger.info("Connected to Postgres database at $url")
-
+    val config = HikariConfig().apply {
+        jdbcUrl = environment.config.property("postgres.url").getString()
+        username = environment.config.property("postgres.user").getString()
+        password = environment.config.property("postgres.password").getString()
+        driverClassName = "org.postgresql.Driver"
+        isAutoCommit = false // Ensures transactions are handled correctly
+        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+        maximumPoolSize = 10 // Example: you can configure the max number of connections
+    }
+    val dataSource = HikariDataSource(config)
+    Database.connect(dataSource)
+    log.info("Connected to Postgres database using a connection pool.")
 }
 
 fun isDbConnectedV2(): Boolean {
