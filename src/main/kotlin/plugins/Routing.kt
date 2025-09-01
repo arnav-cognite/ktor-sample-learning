@@ -1,5 +1,6 @@
 package com.arnav
 
+import com.arnav.service.MeterService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
@@ -9,6 +10,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import service.UsageEventProcessor
 
 fun Application.configureRouting() {
     install(StatusPages) {
@@ -17,10 +19,6 @@ fun Application.configureRouting() {
         }
     }
 
-    // Get the connection from the singleton
-//    val dbConnection = ConnectionManager.getOrThrowConnection()
-
-    // Pass the connection to the MeterService
     val meterService = MeterService()
     val eventProcessor = UsageEventProcessor(meterService)
 

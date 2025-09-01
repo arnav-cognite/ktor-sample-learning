@@ -2,6 +2,7 @@ package com.arnav
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import util.InstantSerializer
 import java.time.Instant
 
 @Serializable

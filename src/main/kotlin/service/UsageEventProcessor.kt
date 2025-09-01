@@ -1,8 +1,9 @@
-package com.arnav
+package service
 
+import com.arnav.UsageEvent
+import com.arnav.service.MeterService
+import org.jetbrains.exposed.sql.exposedLogger
 import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class UsageEventProcessor(private val meterService: MeterService) {
@@ -16,7 +17,6 @@ class UsageEventProcessor(private val meterService: MeterService) {
 
         // Step 3: Trim the time
         val time: Instant = event.time
-//        val time = OffsetDateTime.parse(event.time, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         val windowSize = meterDao.windowSize.uppercase()
 
         val aggregatedTime = when (windowSize) {
@@ -26,18 +26,13 @@ class UsageEventProcessor(private val meterService: MeterService) {
             else -> time
         }
 
-        // You can convert this back to a string or use it for the database insert.
-//        val aggregatedTimeString = aggregatedTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
         // For now, log the data. We'll add database and data warehouse steps later.
-        println("Processing event...")
-        println("  Source: ${event.source}")
-        println("  Event Type: ${event.type}")
-        println("  Meter Info: ${meterDao}")
-        println("  Original Time: ${event.time}")
-        println("  Aggregated Time: $aggregatedTime")
+        exposedLogger.info("Processing $eventType & CDF Service $cdfService, Obtained Meter $meterDao")
+        exposedLogger.info("Aggregated Time $aggregatedTime")
 
         // Step 4 & 5: Database and Data Warehouse logic will go here
+
+
         // We'll implement this in the next steps.
     }
 }
